@@ -31,8 +31,8 @@ def main():
     service.addFilter(BLE_Filter_Connectable(True))  # filter only connectable devices
     service.addFilter(BLE_Filter_RSSI(-95))    # filter devices with RSSI higher than -90dB
     service.addFilter(BLE_Filter_NameStart("C "))  # filter devices with name starting with "C "
-    service.scan(15.0)
-    devices = service.getDevices()
+    service.scan(15.0)  # scan for BLE devices
+    devices = service.getDevices() # get all valid devices
     temp_id=BLE_DataService.getIdFromName('Temperature')
     for dev in devices :
         temp = dev.getServiceData(temp_id)

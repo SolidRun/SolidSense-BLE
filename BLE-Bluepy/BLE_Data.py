@@ -7,7 +7,7 @@
 #
 # Created:     14/07/2019
 # Copyright:   (c) Laurent Carré - Sterwen Technology 2019
-# Licence:     <your licence>
+# Licence:     Eclipse 1.0
 #-------------------------------------------------------------------------------
 
 import bluepy
