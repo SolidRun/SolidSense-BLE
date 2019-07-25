@@ -12,3 +12,4 @@ The scripts requires the bluepy Python package to be installed and this is requi
 
 Only Python3 is supported
 
+Please submit all your issues via the current Github repo
