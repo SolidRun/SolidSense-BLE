@@ -1,0 +1,64 @@
+
+The set of classes allow to quickly develop a BLE controller allowing the detection and exchange with BLE devices.
+
+There is currently 2 modules:
+  BLE_Client  that is implementing the behaviour
+  BLE_Data    that is used to keep track of spefic UUID and conversion functions
+  
+It is recommended to initialize the BLE_Data module by calling registerDataServices() in the main program.
+
+1) BLE_Service class
+  This is the top class to be instantiated to create a BLE service on an HCI interface. The current version only supports one HCI interface but further versions will include the support of several HCI version simultaneously.
+  
+  Main methods for external usage
+  
+  s=BLE_Service(hci_if_no)
+    hci_if_n0 HCI interface number (shall be 0, no default)
+  
+  Scanning for devices
+    s.scan(timeout)
+      timeout duraction in sec (float)
+      
+  Getting the devices detected
+    s.getDevices()
+      returns a list of all detected and valid (not filtered) BLE_Devices
+    s.getDevice(addr)
+      return the BLE_Device with the correponding MAC address (string with 6 hex values separeted by colon)
+    s.addFilter(filter)
+      add a new BLE_Filter in the filter list
+      
+  2) BLE_Device class
+     Proxy for the remote device, shall only be created via the BLE_Service
+     
+     Generic access methods
+     d.name()   return the name (can be None)
+     d.printDef() print a short description of the device
+     d.printFull() print the full description (usefull after a GATT direcovery)
+     d.printData()  print the service data that could have been found in the advertisement frame
+     d.getServiceData(uuid)  return the service data value (or None) for the service UUID
+     d.isConnectable()  return True if the devices is accepting connections
+     
+     GATT client method
+     d.connect()  return True if succefull connection
+     d.disconnect()
+     d.discover() perform a GATT discover of all services and Characteristic associated
+     d.channel(uuid)  Return the channel (Characteristic) with the corresponding UUID raise KeyError if not found
+     
+   3) Channel class
+      Allow reading and writing of the device Characteristic. Shall be created by BLE_Device during the discovery
+      
+      c.read()  return the value Hex encoded
+      c.write(value)  value will be Hex encoded
+      
+    4) BLE_Filter class
+      These classes allow to filter devices during the scan process to keep only relevant ones
+      The following filters have been defined
+      BLE_Filter_RSSI(minRSSI)  all devices with an RSSI below the min are ignored (minRSSI is negative)
+      BLE_Filter_Connectable(indicator) Keep all devices that have the same connectable indicator
+      BLE_Filter_NameStart(pattern)   Keep all devices for which the name starts wityh the pattern. Devices with no name are filterred out
+      BLE_Filter_Whitelist(address_list)  Keep only the devices with the MAC address belonging to the list, on top the list can be modified by:
+          f.addAddress(addr)
+          f.removeAddress(addr)
+      
+   
+  

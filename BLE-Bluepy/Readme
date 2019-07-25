@@ -1,0 +1,8 @@
+This is a preliminary version of the BLE Interface for SolidSense. This is a work in progress, and frequent changes are expected, plesae use your version control in place to use this software to be able to merge the changes
+
+The BLE-Test2.py is giving an example on how to use it to run it: sudo python3 BLE-Test2.py
+
+Know restrictions:
+  Currently fully tested only for advertisement, even if some features are missing
+  
+  GATT client is implemented and will work with synchronous transactions (read/write), but Notification handling is not working well.
