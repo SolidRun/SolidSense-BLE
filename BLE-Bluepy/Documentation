@@ -50,7 +50,7 @@ It is recommended to initialize the BLE_Data module by calling registerDataServi
       c.read()  return the value Hex encoded
       c.write(value)  value will be Hex encoded
       
-    4) BLE_Filter class
+   4) BLE_Filter class
       These classes allow to filter devices during the scan process to keep only relevant ones
       The following filters have been defined
       BLE_Filter_RSSI(minRSSI)  all devices with an RSSI below the min are ignored (minRSSI is negative)
