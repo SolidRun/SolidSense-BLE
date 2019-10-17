@@ -1,0 +1,13 @@
+[Unit]
+Description=BLE Transport Process
+Requires=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3  /opt/SolidSense/ble_gateway/MQTT-Transport-Client/ble_mqtt_service.py --settings=/data/solidsense/ble_gateway/bleTransport.service.cfg
+Restart=always
+RestartSec=6
+
+[Install]
+WantedBy=multi-user.target

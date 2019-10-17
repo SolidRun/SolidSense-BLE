@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
+    <OCD id="com.solidsense.kura.BLEConfigurationService"
+        name="BLE Service Configuration"
+        description="Configuration of the BLE MQTT transport module">
+        
+        <Icon resource="OSGI-INF/icon.png" size="16"/>
+        
+        
+        <AD id="gatewayID"
+            name="Gateway ID"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="device" 
+            >
+            <Option label="Device Name"  value="device"/>
+            <Option label="Custom" value="custom"/>
+            <Option label="Automatic" value="auto"/>
+            
+        </AD>
+        <AD id="customID"
+            name="Gateway custom ID / Prefix"
+            type="String"
+            cardinality="0"
+            required="false" 
+            description="This custom ID can be used as a prefix if you use the device name"
+            >
+        </AD>
+
+        
+        <AD id="transport.enabled"  
+            name="BLE MQTT transport enabled"
+            type="Boolean"
+            cardinality="0" 
+            required="true"
+            default="false" 
+            description="Enable/Disable the BLE MQTT transport service"/>
+
+        <AD id="transport.secured"  
+            name="MQTT transport secure"
+            type="Boolean"
+            cardinality="0" 
+            required="false"
+            default="false" 
+            description="Enable/Disable TLS for the MQTT transport service"/>
+
+        <AD id="transport.address"
+            name="MQTT Broker address"
+            type="String"
+            required="false"
+            cardinality="0"
+            description="address of the MQTT broker"/>
+
+        <AD id="transport.port"
+            name="MQTT Broker port"
+            type="Integer"
+            cardinality="0"
+            required="false"
+            default="1883"
+            max="65536"
+            description="TCP port of the MQTT broker"/>
+
+        <AD id="transport.user"
+            name="MQTT Broker username"
+            type="String"
+            cardinality="0"
+            required="false"
+            description="username for the MQTT broker connexion"/>
+            
+       <AD id="transport.passwd"
+            name="MQTT Broker password"
+            type="String"
+            cardinality="0"
+            required="false"
+            description="password for the MQTT broker connexion"/>
+
+
+
+       <AD id="transport.filters"
+            name="Default Filters configuration"
+            type="String"
+            cardinality="0"
+            required="false"
+            description="The list of filters that will be enabled at the service startup, in the JSON format.|TextArea"/>
+            
+       <AD id="transport.scan"
+            name="Default scanning configuration"
+            type="String"
+            cardinality="0"
+            required="false"
+            description="The scan command that will be executed at the service startup, in the JSON format.|TextArea"/>
+
+            
+            
+    </OCD>
+
+    <Designate pid="com.solidsense.kura.BLEConfigurationService">
+        <Object ocdref="com.solidsense.kura.BLEConfigurationService"/>
+    </Designate>
+</MetaData>
