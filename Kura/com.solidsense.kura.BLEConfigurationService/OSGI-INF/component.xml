@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" configuration-policy="require" deactivate="deactivate" enabled="true" immediate="true" modified="updated" name="com.solidsense.kura.BLEConfigurationService">
+   <implementation class="com.solidsense.kura.BLEConfigurationService"/>
+   <property name="service.pid" type="String" value="com.solidsense.kura.BLEConfigurationService"/>
+   <service>
+      <provide interface="org.eclipse.kura.configuration.ConfigurableComponent"/>
+   </service>
+   <reference bind="setSystemService" cardinality="1..1" interface="org.eclipse.kura.system.SystemService" name="SystemService" policy="static"/>   
+</scr:component>

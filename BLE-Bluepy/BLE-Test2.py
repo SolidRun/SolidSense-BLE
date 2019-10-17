@@ -24,6 +24,11 @@ from BLE_Data import *
 logging.basicConfig(level=logging.DEBUG,stream=sys.stdout,format='%(asctime)s - %(message)s')
 logger=logging.getLogger("BLE_Service")
 
+class TestCallback(BLE_Service_Callbacks) :
+
+    def advertisementCallback(self,dev):
+        print ("Advertisement Callback received for:",dev.name())
+
 def main():
 
     registerDataServices() # register the services to decode the advertisement
