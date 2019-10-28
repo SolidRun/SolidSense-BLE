@@ -207,6 +207,7 @@ class BLE_Device :
         self._addrType=  scan_entry.addrType
         self._name=None
         self._flags=0
+        self._rssi= -200
         self._services=None
         self._channels=None
         self._service_data=None
@@ -472,7 +473,7 @@ class BLE_Device :
                         self._iBeaconUUID=bytearray.fromhex(self._mfg_data[4:44])
                         self._iBeaconPower=int(self._mfg_data[44:46],16)
 
-        self._rssi = scan_entry.rssi
+        self._rssi = max(scan_entry.rssi,self._rssi) # we keep only the max RSSI over a scan
         self._connectable = scan_entry.connectable
         self._interface= scan_entry.iface
 
@@ -713,7 +714,17 @@ class BLE_Service_Delegate(DefaultDelegate)  :
             # then update the data
             if dev != None :
                 dev.fromScanData(scan_data)
+                if self._service._recheckRSSI:
+                    #
+                    # let's reevaluate the filter
+                    if not self._service._rssiFilter.inFilter(scan_data) :
+                        return
                 self._service.advCallback(dev)
+            elif self._service._recheckRSSI :
+                if self._service._rssiFilter.inFilter(scan_data) :
+                    blelog.debug("BLE scan device added after RSSI increase")
+                    self._service.addDevice(scan_data)
+
 
 
 class BLE_Device_Delegate(DefaultDelegate):
@@ -775,6 +786,7 @@ class BLE_Service:
         self._callbacks=None
         self._connectedDev={}
         # self.scanOn=False
+        self._recheckRSSI=False
         self._defaultRetries=1
         self._scanLock=threading.Lock()
         self._scan_run=threading.Event()
@@ -972,6 +984,9 @@ class BLE_Service:
         """
 
         self._filters.append(filter)
+        if type(filter) == BLE_Filter_RSSI :
+            self._recheckRSSI=True
+            self._rssiFilter=filter
 
     def clearFilters(self):
         """
@@ -979,6 +994,7 @@ class BLE_Service:
         """
 
         self._filters.clear()
+        self._recheckRSSI = False
 
     def checkDevice(self,scan_data):
         for f in self._filters :
