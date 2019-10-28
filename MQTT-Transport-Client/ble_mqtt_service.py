@@ -353,7 +353,7 @@ class BLEMQTTService(BLE_Client.BLE_Service_Callbacks):
             return
 
         typeArgs = {
-            'type' : (str, ['rssi', 'white_list', 'connectable', 'starts_with', 'mfg_id_eq']),
+            'type' : (str, ['rssi', 'white_list', 'connectable', 'starts_with', 'mfg_id_eq', 'none']),
             'min_rssi' : (int, None),
             'match_string' : (str, None),
             'addresses'  : (list, None),
@@ -380,6 +380,8 @@ class BLEMQTTService(BLE_Client.BLE_Service_Callbacks):
                 if self._checkBadParams(payloadItem, typeArgs, mandatoryArgs):
                     self.logger.error("Abort Filter request")
                     return
+                elif payloadItem['type'] == 'none' :
+                    break
                 elif payloadItem.get(requiredArgs[payloadItem['type']], None) is None:
                     self.logger.error("Abort Filter request : missing parameter " + requiredArgs[payloadItem['type']])
                     return
@@ -402,6 +404,8 @@ class BLEMQTTService(BLE_Client.BLE_Service_Callbacks):
                 filter = BLE_Client.BLE_Filter_NameStart(payloadItem['match_string'])
             elif filterType == 'mfg_id_eq':
                 filter = BLE_Client.BLE_Filter_MfgID(payloadItem['mfg_id'])
+            elif filterType == 'none':
+                break
 
             self.service.addFilter(filter)
 
