@@ -86,6 +86,7 @@ class Channel:
         """
         Perform a GATT Write
         """
+        blelog.debug("BLE GATT WRITE on Channel: "+self.uuidStr()+" Value: "+str(data))
         if self._device. connected():
             if self.supportsWrite() :
                 try:
@@ -153,6 +154,15 @@ class Channel:
             # print("Notif value=",value)
             if self.writeDesciptor(0x2902,value) :
                 raise BLE_ServiceException("BLE GATT Allow exception failed")
+        else:
+            raise BLE_ServiceException("BLE GATT Characteristic:"+self.uuidStr()+ " Do not support Notifications")
+
+    def stopNotifications(self):
+        if self._char.canNotify():
+            value=struct.pack('H',0)
+            # print("Notif value=",value)
+            if self.writeDesciptor(0x2902,value) :
+                raise BLE_ServiceException("BLE GATT Stop exception failed")
         else:
             raise BLE_ServiceException("BLE GATT Characteristic:"+self.uuidStr()+ " Do not support Notifications")
 
@@ -333,8 +343,10 @@ class BLE_Device :
                 self._notifListener.stopListen()
             # print("*************Actual disconnect for:",self.name())
             self._p.disconnect()
+            # print("## Disconnect done wait for listiner to stop")
             if self._notifListener != None :
                 self._notifListener.join()
+            # print("## Listener stopped")
             self._connected=False
             # self._discovered=False
             self._notifListener=None
@@ -355,6 +367,7 @@ class BLE_Device :
         return True
 
     def allowNotifications(self,channel) :
+        # print ("############## Allow notif on Channel:" ,channel.uuidStr())
         if self._notifListener == None:
             self._notifChannels=[]
             # self._p.setMTU(63) #  for ELA tags to be generalized
@@ -363,6 +376,19 @@ class BLE_Device :
             self._notifListener.start()
 
         self._notifChannels.append(channel)
+
+    def stopNotifications(self):
+        blelog.debug("BLE Device "+self.name()+" Stopping notifications")
+        if self._notifListener != None :
+            self._notifListener.stopListen()
+            self._notifListener.join() # wait for the notification listening thread to stop
+            for c in self._notifChannels :
+                c.stopNotifications()
+            self._notifChannels.clear()
+            self._notifListener=None
+
+    def isListeningNotifications(self):
+        return self._notifListener != None
 
     @staticmethod
     def disconnectTimeout(*argv):
@@ -383,6 +409,11 @@ class BLE_Device :
 
         self._disconnectTimer=threading.Timer(timeout,BLE_Device.disconnectTimeout,(self,None))
         self._disconnectTimer.start()
+
+    def stopDisconnectTimer(self):
+        if self._disconnectTimer != None :
+            self._disconnectTimer.cancel()
+            self._disconnectTimer = None
 
     def handleNotification(self,notification):
         blelog.debug("BLE GATT Notification received on:"+self._addr)
@@ -1061,6 +1092,8 @@ class BLE_Service:
             # now let's check that we don't have a disconnect or other long transaction going on
             # if yes, wait and lock the device
             if not dev.transactionInProgress(True,True) :
+                # need to clear the timer
+                dev.stopDisconnectTimer()
                 return dev # that's OK
         except KeyError:
             pass
@@ -1096,6 +1129,9 @@ class BLE_Service:
             return None
 
         if dev != None :
+            if dev.isListeningNotifications() :
+                blelog.debug("BLE GATT New transaction - stopping notifications")
+                dev.stopNotifications()
             if dev.discover(service):
                 # we have a problem here
                 dev.disconnect()
@@ -1117,7 +1153,12 @@ class BLE_Service:
         if dev == None :
             raise BLE_ServiceException("BLE Service - Failed to connect to:"+addr)
 
-        if not  dev.discovered():
+        if dev.discovered():
+            # the device was already known, check that we don't have a running notifications
+            if dev.isListeningNotifications() :
+                blelog.debug("BLE GATT New transaction - stopping notifications")
+                dev.stopNotifications()
+        else:
             if dev.discover() :
                 dev.disconnect()
                 raise BLE_ServiceException("BLE Service - Failed to discover:"+addr)
@@ -1216,6 +1257,7 @@ class BLE_Service:
                 continue
             # first we write the descriptor to allow notifications
             if len(action) <= 2 :
+                notifChannel=channel
                 try:
                     channel.allowNotifications()
                 except BLE_ServiceException as err:
@@ -1224,8 +1266,10 @@ class BLE_Service:
                     break
                 if len(action) == 2 :
                     channel.setType(action[1])
-                # then we setup the device for receiving notifications
-                dev.allowNotifications(channel)
+                    # then we setup the device for receiving notifications
+                    # at that stage only if there is no write command
+                    if len(actions) == 1 :
+                        dev.allowNotifications(channel)
             # check if have something to write
             if len(action) == 3:
                 # we have a complete tuple so we write
@@ -1237,7 +1281,8 @@ class BLE_Service:
                     blelog.debug("BLE GATT write ERROR "+addr+" / "+channel.uuidStr()+":"+str(err))
                     error=9
                     break  # very little chance to have the next working
-
+                # then we shall allow the notifications after the write to avoid mixing up the transactions
+                dev.allowNotifications(notifChannel)
                 error=0
                 blelog.debug("BLE GATT write "+addr+" / "+channel.uuidStr()+" :"+str(value))
                 v={}
