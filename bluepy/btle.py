@@ -329,6 +329,7 @@ class BluepyHelper:
         self._helper = None
         self._poller = None
         self._stderr = None
+        self._stopFlag = False
         self.delegate = DefaultDelegate()
 
     def withDelegate(self, delegate_):
@@ -350,10 +351,15 @@ class BluepyHelper:
                                             preexec_fn = preexec_function)
             self._poller = select.poll()
             self._poller.register(self._helper.stdout, select.POLLIN)
+            self._stopFlag = False
 
     def _stopHelper(self):
         if self._helper is not None:
+            if self._stopFlag :
+                DBG("Stop Helper reentrant attempt => Ignored")
+                return
             DBG("Stopping ", helperExe())
+            self._stopFlag = True  # to avoid other threads to continue polling
             self._poller.unregister(self._helper.stdout)
             self._helper.stdin.write("quit\n")
             self._helper.stdin.flush()
@@ -403,7 +409,8 @@ class BluepyHelper:
         error_count=0
         while True:
             # if self._helper.poll() is not None:  -- don' understand that and looks an error anyway
-            if self._helper is None :  # looks better
+            if self._helper is None or self._stopFlag :  # looks better
+                DBG("waitResp => Exit")
                 # raise BTLEInternalError("Helper exited") # maybe a silent return is simpler
                 return None
 

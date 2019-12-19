@@ -5,6 +5,7 @@ Requires=network.target
 [Service]
 Type=simple
 User=root
+ExecStartPre=/bin/bash -c 'if [ ! -f /data/solidsense/ble_gateway/bleTransport.service.cfg ]; then mkdir -p /data/solidsense/ble_gateway; cp /opt/SolidSense/.config/ble_gateway/bleTransport.service.cfg /data/solidsense/ble_gateway/bleTransport.service.cfg; fi'
 ExecStart=/usr/bin/python3  /opt/SolidSense/ble_gateway/MQTT-Transport-Client/ble_mqtt_service.py --settings=/data/solidsense/ble_gateway/bleTransport.service.cfg
 Restart=always
 RestartSec=6

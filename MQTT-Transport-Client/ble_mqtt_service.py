@@ -37,6 +37,7 @@ import argparse
 import socket
 
 
+ble_mqtt_version="1.0.3"
 # Global logger
 _logger = None
 
@@ -68,7 +69,7 @@ class BLEMQTTService(BLE_Client.BLE_Service_Callbacks):
         )
 
         self.mqtt_wrapper.start()
-        self.logger.info("Gateway started with id: %s", self.gw_id)
+        self.logger.info("Gateway version %s started with id: %s", ble_mqtt_version, self.gw_id)
 
         self.first_connection = True
 
