@@ -1,9 +1,42 @@
-# allow notification
-{"command":"allow_notifications","keep":10.0,"action_set": [
-{"characteristic":"6e400003-b5a3-f393-e0a9-e50e24dcca9e","type":3},
-{"characteristic": "6e400002-b5a3-f393-e0a9-e50e24dcca9e","type":3,"value":"LED_OFF"}
-]}
-# scan payload
-{"command":"time_scan","timeout":20,"advertisement":"full","period":30,"sub_topics":false}
-#
-{"command":"discover","keep":10.0,"properties":true,"transac_id":123456,"service":"6e400001-b5a3-f393-e0a9-e50e24dcca9e"}
+# allow notification {
+  "command": "allow_notifications",
+  "keep": 10.0,
+  "action_set": [
+    {
+      "characteristic": "6e400003-b5a3-f393-e0a9-e50e24dcca9e",
+      "type": 3
+    },
+    {
+      "characteristic": "6e400002-b5a3-f393-e0a9-e50e24dcca9e",
+      "type": 3,
+      "value": "LED_OFF"
+    }
+  ]
+} # scan payload {
+  "command": "time_scan",
+  "timeout": 20,
+  "advertisement": "full",
+  "period": 30,
+  "sub_topics": false
+} # {
+  "command": "discover",
+  "keep": 10.0,
+  "properties": true,
+  "transac_id": 123456,
+  "service": "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
+} # # ELA Read log
+
+{
+  "command": "allow_notifications",
+  "keep": 10.0,
+  "action_set": [
+    {
+      "characteristic": "6e400003-b5a3-f393-e0a9-e50e24dcca9e",
+      "type": 3
+    },
+    {
+      "characteristic": "6e400002-b5a3-f393-e0a9-e50e24dcca9e",
+      "type": 3,
+      "value": "READ_DATA 123456789A"
+    }
+}

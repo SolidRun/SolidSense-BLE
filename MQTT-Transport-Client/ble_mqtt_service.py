@@ -37,7 +37,7 @@ import argparse
 import socket
 
 
-ble_mqtt_version="1.0.3"
+ble_mqtt_version="1.0.4"
 # Global logger
 _logger = None
 

@@ -261,10 +261,7 @@ class BLE_Device :
             self.initDevConnect()
         if not self.transactionInProgress(False,False):
             self.startTransaction()
-        try:
-            self._p= Peripheral(self._addr,self._addrType)
-        except BTLEException as err:
-            blelog.error ("BLE GATT Connect: "+str(err))
+        if self._innerConnect():
             self.endTransaction()
             return False
         self._connected=True
@@ -274,6 +271,15 @@ class BLE_Device :
         self.endTransaction()
         blelog.info("BLE GATT device:"+self.name()+" CONNECTED")
         return True
+
+    def _innerConnect(self):
+        mtu=getparam('notif_MTU')
+        try:
+            self._p= Peripheral(self._addr,self._addrType,self._ble_s.ifNumber(),mtu)
+            return True
+        except BTLEException as err:
+            blelog.error ("BLE GATT Connect: "+str(err))
+            return True
 
     def discover(self,service_uuid=None):
         """
@@ -810,7 +816,7 @@ class BLE_Service:
     """
     runningService=None
 
-    def __init__(self,interface=0):
+    def __init__(self,interface=None):
         self._devices={}
         self._filters=[]
         self._detectedDevices=0
@@ -826,8 +832,22 @@ class BLE_Service:
         self._scan_run.set()
         self._scan_start=threading.Event()
         self._periodic=False
-        self._scanner= Scanner(interface).withDelegate(BLE_Service_Delegate(self))
+        if interface == None :
+            self._interface=getparam('interface')
+        else:
+            self._interface=interface
+
+        if self._interface.startswith('hci'):
+            self._ifnum=int(self._interface[3])
+        else:
+            blelog.critical("BLE interface name invalid:"+self._interface)
+            raise BLE_ServiceException("Invalid interface")
+        blelog.info("BLE Service starting on "+self._interface)
+        self._scanner= Scanner(self._ifnum).withDelegate(BLE_Service_Delegate(self))
         BLE_Service.runningService=self
+
+    def ifNumber(self):
+        return self._ifnum
 
     def scanSynch(self,timeout,forceDisconnect) :
         """
@@ -1552,6 +1572,7 @@ def BLE_init_parameters():
         out['notif_MTU']=63
         out['debug_bluez']=False
         out['trace']= "info"
+        out["interface"]="hci0"
         try:
             fp=open(fn,'w')
         except IOError as err:
@@ -1562,7 +1583,10 @@ def BLE_init_parameters():
         blegw_parameters=out
         return
     blegw_parameters=json.load(fp)
-    # print(modem_gps_parameters)
+    try:
+        intf=blegw_parameters['interface']
+    except KeyError :
+        blegw_parameters['interface']="hci0"
     fp.close()
 
 def getparam(name):

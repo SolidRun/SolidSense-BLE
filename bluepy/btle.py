@@ -17,16 +17,15 @@ def preexec_function():
     # signal handler SIG_IGN.
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
+'''
+# additional debugging features for SolidSense
+This allowing to dynamically set the traces for low level python and Bluez
+SolidSense addition by Sterwen Technology
+'''
 Debugging = False
 script_path = os.path.join(os.path.abspath(os.path.dirname(__file__)))
 solidsense_path="/opt/SolidSense/bin"
 
-SEC_LEVEL_LOW = "low"
-SEC_LEVEL_MEDIUM = "medium"
-SEC_LEVEL_HIGH = "high"
-
-ADDR_TYPE_PUBLIC = "public"
-ADDR_TYPE_RANDOM = "random"
 
 def DBG(*args):
     global Debugging
@@ -37,7 +36,6 @@ def DBG(*args):
 def Bluepy_debug(flag):
     global Debugging
     Debugging= flag
-    # print("=========================set bluez debug to:",flag)
 
 def helperExe():
     global Debugging
@@ -45,6 +43,15 @@ def helperExe():
         return os.path.join(solidsense_path, "bluepy-helper-dbg")
     else:
         return os.path.join(solidsense_path, "bluepy-helper")
+
+# end debugging functions
+
+SEC_LEVEL_LOW = "low"
+SEC_LEVEL_MEDIUM = "medium"
+SEC_LEVEL_HIGH = "high"
+
+ADDR_TYPE_PUBLIC = "public"
+ADDR_TYPE_RANDOM = "random"
 
 
 class BTLEException(Exception):
@@ -461,15 +468,15 @@ class BluepyHelper:
 
 
 class Peripheral(BluepyHelper):
-    def __init__(self, deviceAddr=None, addrType=ADDR_TYPE_PUBLIC, iface=None):
+    def __init__(self, deviceAddr=None, addrType=ADDR_TYPE_PUBLIC, iface=None,mtu=0):
         BluepyHelper.__init__(self)
         self._serviceMap = None # Indexed by UUID
         (self.deviceAddr, self.addrType, self.iface) = (None, None, None)
 
         if isinstance(deviceAddr, ScanEntry):
-            self._connect(deviceAddr.addr, deviceAddr.addrType, deviceAddr.iface)
+            self._connect(deviceAddr.addr, deviceAddr.addrType, deviceAddr.iface,mtu)
         elif deviceAddr is not None:
-            self._connect(deviceAddr, addrType, iface)
+            self._connect(deviceAddr, addrType, iface,mtu)
 
     def setDelegate(self, delegate_): # same as withDelegate(), deprecated
         return self.withDelegate(delegate_)
@@ -499,7 +506,7 @@ class Peripheral(BluepyHelper):
                     continue
             return resp
 
-    def _connect(self, addr, addrType=ADDR_TYPE_PUBLIC, iface=None):
+    def _connect(self, addr, addrType=ADDR_TYPE_PUBLIC, iface=None,mtu=0):
         if len(addr.split(":")) != 6:
             raise ValueError("Expected MAC address, got %s" % repr(addr))
         if addrType not in (ADDR_TYPE_PUBLIC, ADDR_TYPE_RANDOM):
@@ -516,15 +523,19 @@ class Peripheral(BluepyHelper):
         while rsp['state'][0] == 'tryconn':
             rsp = self._getResp('stat')
         if rsp['state'][0] != 'conn':
+            # let try to get more info so it can be passed back via Exception
+            rsp=self._getResp('err',0.2)
+            # print("Connect error",rsp)
             self._stopHelper()
             raise BTLEDisconnectError("Failed to connect to peripheral %s, addr type: %s" % (addr, addrType), rsp)
-        self.setMTU(63) #********************* For test
+        if mtu > 23 :
+            self.setMTU(mtu)
 
-    def connect(self, addr, addrType=ADDR_TYPE_PUBLIC, iface=None):
+    def connect(self, addr, addrType=ADDR_TYPE_PUBLIC, iface=None,mtu=0):
         if isinstance(addr, ScanEntry):
-            self._connect(addr.addr, addr.addrType, addr.iface)
+            self._connect(addr.addr, addr.addrType, addr.iface,mtu)
         elif addr is not None:
-            self._connect(addr, addrType, iface)
+            self._connect(addr, addrType, iface,mtu)
 
     def disconnect(self):
         if self._helper is None:

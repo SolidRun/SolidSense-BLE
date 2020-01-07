@@ -545,7 +545,7 @@ static void connect_cb(GIOChannel *io, GError *err, gpointer user_data)
     if (err) {
         set_state(STATE_DISCONNECTED);
         resp_str_error(err_CONN_FAIL, err->message);
-        printf("# Connect error: %s\n", err->message);
+        DBG("# Connect error: %s\n", err->message);
         return;
     }
 
@@ -553,7 +553,7 @@ static void connect_cb(GIOChannel *io, GError *err, gpointer user_data)
                 BT_IO_OPT_CID, &cid, BT_IO_OPT_INVALID);
 	DBG("MTU=%d cid=%d",mtu,cid);
     if (gerr) {
-        printf("# Can't detect MTU, using default");
+        DBG("# Can't detect MTU, using default");
         g_error_free(gerr);
         mtu = ATT_DEFAULT_LE_MTU;
     }

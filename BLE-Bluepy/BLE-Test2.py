@@ -16,7 +16,7 @@ import time
 import logging
 import sys
 
-import bluepy
+# import bluepy
 
 from BLE_Client import *
 from BLE_Data import *
@@ -31,18 +31,19 @@ class TestCallback(BLE_Service_Callbacks) :
 
 def main():
 
+    BLE_init_parameters()
+    level=getLogLevel()
+    print("Logging level=",level)
     registerDataServices() # register the services to decode the advertisement
-    service=BLE_Service(0) #  create the BLE interface service
-    service.addFilter(BLE_Filter_Connectable(True))  # filter only connectable devices
-    service.addFilter(BLE_Filter_RSSI(-95))    # filter devices with RSSI higher than -90dB
-    service.addFilter(BLE_Filter_NameStart("C "))  # filter devices with name starting with "C "
-    service.scan(15.0)  # scan for BLE devices
+    service=BLE_Service() #  create the BLE interface service
+    #service.addFilter(BLE_Filter_Connectable(True))  # filter only connectable devices
+    #service.addFilter(BLE_Filter_RSSI(-95))    # filter devices with RSSI higher than -90dB
+    #service.addFilter(BLE_Filter_NameStart("C "))  # filter devices with name starting with "C "
+    service.scanSynch(15.0,False)  # scan for BLE devices
     devices = service.getDevices() # get all valid devices
-    temp_id=BLE_DataService.getIdFromName('Temperature')
+    # temp_id=BLE_DataService.getIdFromName('Temperature')
     for dev in devices :
-        temp = dev.getServiceData(temp_id)
-        if temp != None :
-            print("Sensor:",dev.name()," Temperature:",temp)
+        dev.printDef()
 
 
 
