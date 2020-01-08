@@ -832,6 +832,7 @@ class BLE_Service:
         self._scan_run.set()
         self._scan_start=threading.Event()
         self._periodic=False
+        self._scan_error=0
         if interface == None :
             self._interface=getparam('interface')
         else:
@@ -924,6 +925,7 @@ class BLE_Service:
 
     def _initScan(self) :
         self._scanLock.acquire() # protect the scan only one at a time
+        self._scan_error=0
         self._scan_run.clear()
         self._devices.clear()
         self._detectedDevices=0
@@ -932,20 +934,26 @@ class BLE_Service:
     def _startScan(self,timeout):
         self._scan_start.set()
         self._connect_lock.set()
-        if timeout <= 0 : return  # if no timeout then scan is not executed here
+        if timeout <= 0 : return True # if no timeout then scan is not executed here
         try:
             self._scanner.scan(timeout)  ## add error handling
         except btle.BTLEException as err:
             blelog.error("BLE Scan "+str(err))
+            return False
+        return True
 
+    def scanError(self):
+        return self._scan_error
 
-    def _scanEnds(self):
+    def _scanEnds(self,error):
         self._scan_end=time.time()
-        self._scan_error=0
+        self._scan_error=error
         if self._callbacks != None :
             self._callbacks.scanEndCallback(self)
         self._scan_run.set()
         self._scanLock.release()
+        if error != 0:
+            return
         if self._periodic :
             if self._breathTime == 0 :
                 self.scanAsynch(self._timeout,False)
@@ -1488,9 +1496,13 @@ class BLE_Listener(threading.Thread):
 
     def run(self) :
         blelog.debug("BLE Listener - start can for:"+str(self._timeout))
-        self._service._startScan(self._timeout)
-        blelog.debug("BLE Listener - scan end on timeout")
-        self._service._scanEnds()
+        if self._service._startScan(self._timeout) :
+            blelog.debug("BLE Listener - scan end on timeout")
+            error=0
+        else:
+            blelog.error("BLE Scan error")
+            error=1
+        self._service._scanEnds(error)
 
 
 class BLE_ListenerInd(threading.Thread) :
@@ -1513,7 +1525,7 @@ class BLE_ListenerInd(threading.Thread) :
             self._s.start()
         except btle.BTLEException as err:
             blelog.error("BLE Start Scan:"+str(err))
-            self._service.scanEnds()
+            self._service.scanEnds(1)
             return
         while True:
             if self.stopFlag :
@@ -1528,7 +1540,7 @@ class BLE_ListenerInd(threading.Thread) :
             except btle.BTLEException as err:
                 blelog.error("BLE Scan process:"+str(err))
                 break
-        self._service._scanEnds()
+        self._service._scanEnds(0)
 
 
 
