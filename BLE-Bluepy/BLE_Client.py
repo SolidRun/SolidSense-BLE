@@ -276,7 +276,7 @@ class BLE_Device :
         mtu=getparam('notif_MTU')
         try:
             self._p= Peripheral(self._addr,self._addrType,self._ble_s.ifNumber(),mtu)
-            return True
+            return False    # no error
         except BTLEException as err:
             blelog.error ("BLE GATT Connect: "+str(err))
             return True
