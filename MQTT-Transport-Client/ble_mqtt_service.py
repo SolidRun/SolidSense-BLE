@@ -37,7 +37,7 @@ import argparse
 import socket
 
 
-ble_mqtt_version="1.0.3"
+ble_mqtt_version="1.0.4"
 # Global logger
 _logger = None
 
@@ -87,17 +87,23 @@ class BLEMQTTService(BLE_Client.BLE_Service_Callbacks):
     def _on_connect(self):
         self.logger.info("MQTT connected!")
 
-        # Suscribe topics
-        self.mqtt_wrapper.subscribe("scan/" + self.gw_id, self._scan_cmd_received)
-        self.mqtt_wrapper.subscribe("filter/" + self.gw_id, self._filter_cmd_received)
-        self.mqtt_wrapper.subscribe("gatt/" + self.gw_id + "/+", self._gatt_cmd_received)
-
+        '''
+        Changes made following the bug #396
+        Subscription is now made after service readiness
+        '''
+        # print("First connection:",self.first_connection)
         if self.first_connection:
             self.first_connection = False
 
             # Init BLE
             BLE_Data.registerDataServices()
-            self.service = BLE_Client.BLE_Service()
+            # print("Creating BLE Service")
+            try:
+                self.service = BLE_Client.BLE_Service()
+            except BLE_Client.BLE_ServiceException as err:
+                self.logger.critical("Error during BLE Service creation => gateway not operational")
+                raise
+            # print("BLE service created")
             self.service.setCallbacks(self)
 
             # Default configuration
@@ -108,6 +114,13 @@ class BLEMQTTService(BLE_Client.BLE_Service_Callbacks):
             if len(self.ble_scan) > 0:
                 self.logger.info("apply default scan configuration : " + self.ble_scan)
                 self._scan_cmd_processing(self.ble_scan)
+
+
+        # Suscribe topics when the BLE Service is ready
+        self.mqtt_wrapper.subscribe("scan/" + self.gw_id, self._scan_cmd_received)
+        self.mqtt_wrapper.subscribe("filter/" + self.gw_id, self._filter_cmd_received)
+        self.mqtt_wrapper.subscribe("gatt/" + self.gw_id + "/+", self._gatt_cmd_received)
+        self.logger.info("******* BLE gateway ready *********")
 
 
     def deferred_thread(fn):

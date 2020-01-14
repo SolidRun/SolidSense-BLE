@@ -16,7 +16,7 @@ import time
 import logging
 import sys
 
-import bluepy
+# import bluepy
 
 from BLE_Client import *
 from BLE_Data import *
