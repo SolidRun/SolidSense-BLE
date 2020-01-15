@@ -68,10 +68,9 @@ class BLEMQTTService(BLE_Client.BLE_Service_Callbacks):
             self._on_connect
         )
 
-        self.mqtt_wrapper.start()
-        self.logger.info("Gateway version %s started with id: %s", ble_mqtt_version, self.gw_id)
-
         self.first_connection = True
+        self.logger.info("Gateway version %s started with id: %s", ble_mqtt_version, self.gw_id)
+        self.mqtt_wrapper.start()
 
 
     def _on_mqtt_wrapper_termination_cb(self):
