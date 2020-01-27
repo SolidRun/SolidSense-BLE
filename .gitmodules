@@ -1,0 +1,3 @@
+[submodule "helper/bluez"]
+	path = helper/bluez
+	url = https://github.com/solidrun-ejb/bluez.git
