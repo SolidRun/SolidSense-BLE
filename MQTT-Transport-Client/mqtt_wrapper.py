@@ -71,7 +71,6 @@ class MQTTWrapper(Thread):
         except (socket.gaierror, ValueError) as e:
             self.logger.error("Cannot connect to mqtt %s", e)
             exit(-1)
-
         # Set options to initial socket
         self._client.socket().setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 2048)
 

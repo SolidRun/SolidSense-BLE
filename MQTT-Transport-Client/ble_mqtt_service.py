@@ -96,25 +96,30 @@ class BLEMQTTService(BLE_Client.BLE_Service_Callbacks):
 
             # Init BLE
             BLE_Data.registerDataServices()
-            # print("Creating BLE Service")
+            print("Creating BLE Service")
             try:
                 self.service = BLE_Client.BLE_Service()
             except BLE_Client.BLE_ServiceException as err:
                 self.logger.critical("Error during BLE Service creation => gateway not operational")
                 raise
-            # print("BLE service created")
+            print("BLE service created")
             self.service.setCallbacks(self)
-
+            print("on connect #1",self.ble_filters,self.ble_scan)
             # Default configuration
-            if len(self.ble_filters) > 0:
-                self.logger.info("apply default filters configuration : " + self.ble_filters)
-                self._filter_cmd_procesing(self.ble_filters)
+            '''
+            Need to check slef.ble_filtes and self.ble_scan are not None
+            This is crashing the thread (silently) with some implemetentations
+            '''
+            if self.ble_filters is not None:
+                if len(self.ble_filters) > 0:
+                    self.logger.info("apply default filters configuration : " + self.ble_filters)
+                    self._filter_cmd_procesing(self.ble_filters)
+            if self.ble_scan is not None:
+                if len(self.ble_scan) > 0:
+                    self.logger.info("apply default scan configuration : " + self.ble_scan)
+                    self._scan_cmd_processing(self.ble_scan)
 
-            if len(self.ble_scan) > 0:
-                self.logger.info("apply default scan configuration : " + self.ble_scan)
-                self._scan_cmd_processing(self.ble_scan)
-
-
+        # print("Subscribing...")
         # Suscribe topics when the BLE Service is ready
         self.mqtt_wrapper.subscribe("scan/" + self.gw_id, self._scan_cmd_received)
         self.mqtt_wrapper.subscribe("filter/" + self.gw_id, self._filter_cmd_received)
@@ -625,7 +630,9 @@ def main():
     _check_parameters(settings, _logger)
 
     try:
-        BLEMQTTService(settings=settings, logger=_logger).run()
+        ble_mqqt_service=BLEMQTTService(settings=settings, logger=_logger)
+        # print("BLE MQQT Service created")
+        ble_mqqt_service.run()
     except ConnectionRefusedError as cre:
         _logger.error("Connection refused, try later...")
     except Exception as e:
