@@ -953,7 +953,14 @@ class BLE_Service:
         self._scan_run.set()
         self._scanLock.release()
         if error != 0:
-            return
+            # need to check that we are not periodic otherwise that creates a deadlock
+            if self._periodic :
+                if error != 1 :
+                    blelog.info("Periodic Scan stopped on error")
+                    self._periodic = False
+                    return
+            else:
+                return
         if self._periodic :
             if self._breathTime == 0 :
                 self.scanAsynch(self._timeout,False)
