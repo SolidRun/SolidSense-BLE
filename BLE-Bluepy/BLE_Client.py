@@ -1594,6 +1594,13 @@ class BLE_Notification_Listener(threading.Thread) :
 #   Execution parameters
 blegw_parameters=None
 
+def BLE_Init_Service(handler):
+    BLE_init_parameters()
+    level=getLogLevel()
+    blelog.setLevel(level)
+    blelog.addHandler(handler)
+
+
 def BLE_init_parameters():
     global blegw_parameters
     dir_h=getDataDir()
