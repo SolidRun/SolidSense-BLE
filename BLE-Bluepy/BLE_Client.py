@@ -833,6 +833,8 @@ class BLE_Service:
         self._scan_start=threading.Event()
         self._periodic=False
         self._scan_error=0
+        self._inhibitFilter=False
+        self._inhibitCallback=False
         if interface == None :
             self._interface=getparam('interface')
         else:
@@ -850,7 +852,7 @@ class BLE_Service:
     def ifNumber(self):
         return self._ifnum
 
-    def scanSynch(self,timeout,forceDisconnect) :
+    def scanSynch(self,timeout,forceDisconnect,inhibitFlag=False) :
         """
         Synchonous scan - reset all devices
 
@@ -858,12 +860,20 @@ class BLE_Service:
         else the calling Thread shall wait
 
         """
+
         self._initScan()
+        if inhibitFlag :
+            self._inhibitCallback = True
+            self._inhibitFilter=True
+        # self._periodic=False
         blelog.info("BLE Synchonous Scan start for:"+str(timeout)+" sec")
         self._checkConnected(forceDisconnect)
         self._startScan(timeout)
         blelog.info("BLE Synchronous Scan end - nb of devices detected:"+str(self._detectedDevices)+" valid devices:"+str(len(self._devices)))
-        self._scanEnds()
+        self._scanEnds(0)
+        # reset inibitFlags
+        self._inhibitCallback=False
+        self._inhibitFilter=False
 
     def scanAsynchWait(self):
         """
@@ -948,8 +958,9 @@ class BLE_Service:
     def _scanEnds(self,error):
         self._scan_end=time.time()
         self._scan_error=error
-        if self._callbacks != None :
-            self._callbacks.scanEndCallback(self)
+        if not self._inhibitCallback :
+            if self._callbacks != None :
+                self._callbacks.scanEndCallback(self)
         self._scan_run.set()
         self._scanLock.release()
         if error != 0:
@@ -1063,6 +1074,7 @@ class BLE_Service:
         self._recheckRSSI = False
 
     def checkDevice(self,scan_data):
+        if self._inhibitFilter : return True
         for f in self._filters :
             if f.inFilter(scan_data): continue
             else:
@@ -1077,6 +1089,7 @@ class BLE_Service:
         dev.fromScanData[scan_data]
 
     def advCallback(self,dev):
+        if self._inhibitCallback : return
         if self._callbacks != None :
             self._callbacks._advReceived(dev)
 
@@ -1356,7 +1369,11 @@ class BLE_Service:
             devda.append(devd)
         out['devices']=devda
 
-
+    def findDeviceByName(self,searchStr):
+        for a,d in self._devices.items() :
+            if d.name().startswith(searchStr) :
+                return a
+        return None
 
 ################################################################################
 #
@@ -1576,6 +1593,13 @@ class BLE_Notification_Listener(threading.Thread) :
 #
 #   Execution parameters
 blegw_parameters=None
+
+def BLE_Init_Service(handler):
+    BLE_init_parameters()
+    level=getLogLevel()
+    blelog.setLevel(level)
+    blelog.addHandler(handler)
+
 
 def BLE_init_parameters():
     global blegw_parameters
